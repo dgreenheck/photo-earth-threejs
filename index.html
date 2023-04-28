@@ -17,23 +17,19 @@
     <script type="module">
       import earth from './scripts/earth.js';
       
-      let geoData = undefined;
-      fetch("./images/geoData.json")
+      fetch("photos.json")
         .then(response => {
           return response.json();
         })
-        .then(data => {
-          geoData = data;
-          initializePhotos();
-          updatePhotos();
+        .then(photos => {
+          earth.loadPhotos(photos);
         });
 
-      const ZOOM_SENSITIVITY = 0.5;
+      const ZOOM_SENSITIVITY = 1;
       const LAT_SENSITIVITY = 0.1;
       const LON_SENSITIVITY = 0.1;
 
       let gotoTimeout = undefined;
-      let zoom = 0.1;
       let mouseDown = false;
       let shiftDown = false;
       let lastMouse = { x: -1, y: -1 }
@@ -51,7 +47,6 @@
       });
 
       addEventListener('mousemove', (event) => {
-        if (!geoData) return;
         if (!mouseDown) return;
 
         if (lastMouse.x == -1 || lastMouse.y == -1) {
@@ -64,27 +59,17 @@
           y: (event.clientY - lastMouse.y)
         }
 
-        const container = document.getElementById('photo-container');
-
         // Update photo zoom
         if (shiftDown) {
-          zoom -= ZOOM_SENSITIVITY * (event.clientY - lastMouse.y) / window.innerWidth;
-          zoom = Math.max(0, Math.min(zoom, 1));
-          earth.setZoom(zoom);
+          const deltaZoom = ZOOM_SENSITIVITY * (event.clientY - lastMouse.y) / window.innerWidth;
+          earth.updateZoom(deltaZoom);
         } else {
           // Update the latitude/longitude for the Earth
           earth.updateLatLon(
             mouseDelta.y * LAT_SENSITIVITY,
             mouseDelta.x * LON_SENSITIVITY
           );
-
-          // Rotate the photo container
-          const { lat, lon } = earth.getLatLon();
-          container.style.setProperty("--latitude", `${-lat}deg`);
-          container.style.setProperty("--longitude", `${lon}deg`);
         }
-
-        updatePhotos();
 
         lastMouse = { x: event.clientX, y: event.clientY }
       })
@@ -98,92 +83,6 @@
       addEventListener('mouseup',(event) => {
         mouseDown = false;
       });
-
-      window.gotoPhoto = (event) => {
-        // If currently rotating to another photo, cancel that
-        clearTimeout(gotoTimeout);
-        gotoEaseIn(event);
-      }
-
-      /**
-       * Smoothly rotates from the current orientation to the target
-       *
-       */
-      function gotoEaseIn(event) {
-        const location = event.target.getAttribute('src');
-        
-        const speed = 0.05;
-
-        const current = earth.getLatLon();
-        const target = geoData[location];
-        const final = {
-          lat: (1 - speed) * current.lat + speed * target.lat,
-          lon: (1 - speed) * current.lon + speed * target.lon
-        };
-
-        earth.setLatLon(final.lat, final.lon);
-
-        const container = document.getElementById('photo-container');
-        container.style.setProperty("--latitude", `${-final.lat}deg`);
-        container.style.setProperty("--longitude", `${final.lon}deg`);
-
-        updatePhotoOpacity();
-
-        // Calculate remaining rotation left to go
-        const err = Math.max(
-          Math.abs(current.lat - final.lat),
-          Math.abs(current.lon - final.lon)
-        );
-
-        // Get within 0.05 degrees of the final lat/lon
-        if (err > 0.05) {
-          gotoTimeout = setTimeout(() => window.gotoPhoto(event), 10);
-        } else {
-          clearTimeout(gotoTimeout);
-        }
-      }
-
-      function updatePhotos() {
-        for(const img of document.getElementsByClassName('photo')) {
-          const location = img.getAttribute('src');
-
-          // Controls how quickly photos fade out as you rotate away from them
-          const fadeThreshold = 75;
-
-          // Get the max difference in degrees between the current lat/lon
-          // and the photo's lat/lon
-          const photo = geoData[location];
-          const current = earth.getLatLon();
-          const diff = {
-            lat: Math.abs(photo.lat - current.lat),
-            lon: Math.abs(photo.lon - current.lon)
-          };
-
-          // Handle discontinuity at -180/180
-          if (diff.lon > 180) diff.lon = 360 - diff.lon;
-
-          // Fade out opacity as photo rotates away from the current lat/lon
-          img.style.opacity = 1 - (Math.max(diff.lon, diff.lat) / fadeThreshold);
-
-          // Update zoom
-          img.style.setProperty("--zoom", zoom);
-        }
-      }
-
-      function initializePhotos() {
-        for(const img of document.getElementsByClassName('photo')) {
-          const location = img.getAttribute('src');
-
-          const photo = {
-            lat: geoData[location].lat,
-            lon: geoData[location].lon
-          };
-
-          img.style.setProperty("--zoom", zoom)
-          img.style.setProperty("--latitude", `${photo.lat}deg`);
-          img.style.setProperty("--longitude", `${-photo.lon}deg`);
-        }
-      }
     </script>
   </body>
 </html>
