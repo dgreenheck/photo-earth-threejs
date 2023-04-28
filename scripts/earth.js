@@ -11,6 +11,8 @@ const earthBumpMap = new THREE.TextureLoader().load('images/bumpmap.jpg');
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0xffffff, 0);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap; // default THREE.PCFShadowMap
 document.body.appendChild(renderer.domElement);
 
 // Setup the scene
@@ -21,7 +23,7 @@ camera.position.x = 3;
 camera.lookAt(0, 0, 0);
 
 const earthGeometry = new THREE.SphereGeometry(1, 32, 32);
-const earthMaterial = new THREE.MeshPhongMaterial({ 
+const earthMaterial = new THREE.MeshStandardMaterial({ 
   map: earthTexture,
   bumpMap: earthBumpMap,
   bumpScale: 0.05,
@@ -29,6 +31,8 @@ const earthMaterial = new THREE.MeshPhongMaterial({
 });
 const earth = new THREE.Mesh(earthGeometry, earthMaterial);
 earth.rotation.order = 'ZYX';
+earth.receiveShadow = true;
+earth.castShadow = true;
 
 let imageMeshes = [];
 
@@ -42,14 +46,17 @@ function loadPhotos(photos) {
   for (const [imageUrl, coords] of Object.entries(photos)) {
     const imageTexture = new THREE.TextureLoader().load(imageUrl);
     const imageGeometry = new THREE.PlaneGeometry(0.2, 0.2);
-    const imageMaterial = new THREE.MeshPhongMaterial({ map: imageTexture })
+    const imageMaterial = new THREE.MeshStandardMaterial({ map: imageTexture })
+    imageMaterial.shadowSide = THREE.DoubleSide;
     const imageMesh = new THREE.Mesh(imageGeometry, imageMaterial);
+    imageMesh.castShadow = true;
+    imageMesh.receiveShadow = false;
     imageMeshes.push(imageMesh);
 
     // Then rotate to it's lat/lon
     // First translate the image in the +Z direciton
     const translateNode = new THREE.Object3D();
-    translateNode.position.x = 1.01;
+    translateNode.position.x = 1.05;
     translateNode.rotation.y = deg2rad(90);
     translateNode.add(imageMesh);
 
@@ -60,12 +67,19 @@ function loadPhotos(photos) {
     earth.add(rotateNode);
   }
 
-  const ambient = new THREE.AmbientLight(0xffffff, 0.3);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.2);
   scene.add(ambient);
 
-  const sun = new THREE.DirectionalLight(0xffffff, 0.3);
-  sun.position.set(1, 1, 1);
+  const sun = new THREE.DirectionalLight(0xffffff, 0.4);
+  sun.position.set(5, 0, 0);
+  sun.castShadow = true;
   scene.add(sun);
+
+  //Set up shadow properties for the light
+  sun.shadow.mapSize.width = 4096; // default
+  sun.shadow.mapSize.height = 4096; // default
+  sun.shadow.camera.near = 0.5; // default
+  sun.shadow.camera.far = 100; // default
 
   animate();
 }
