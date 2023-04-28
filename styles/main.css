@@ -1,0 +1,35 @@
+body {
+  background-color: #222222;
+}
+
+#photo-container {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+
+  transform: 
+    perspective(1000px)
+    rotateX(var(--latitude, 0deg))
+    rotateY(var(--longitude, 0deg));
+
+  transform-style: preserve-3d;
+  user-select: none;
+}
+
+.photo {
+  position: fixed;
+  height: 800px;
+
+  transform:
+    rotateY(var(--longitude, 0deg))
+    rotateX(var(--latitude, 0deg))
+    translateZ(330px)
+    scaleX(var(--zoom, 0.2))
+    scaleY(var(--zoom, 0.2));
+
+  user-select: none;
+}
