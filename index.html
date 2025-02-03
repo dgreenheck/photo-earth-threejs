@@ -3,6 +3,9 @@
   <head lang="en">
 		<meta charset="utf-8">
     <link rel="stylesheet" href="styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
     <script type="importmap">
       {
@@ -14,10 +17,12 @@
     </script>
   </head>
   <body>
+    <div id="render-target"></div>
     <script type="module">
-      import earth from './scripts/earth.js';
+      import * as earth from './scripts/earth.js';
       
-      fetch("photos.json")
+      // Load the photo metadata
+      fetch("/images/photos/locations.json")
         .then(response => {
           return response.json();
         })
@@ -25,64 +30,13 @@
           earth.loadPhotos(photos);
         });
 
-      const ZOOM_SENSITIVITY = 1;
-      const LAT_SENSITIVITY = 0.1;
-      const LON_SENSITIVITY = 0.1;
-
-      let gotoTimeout = undefined;
-      let mouseDown = false;
-      let shiftDown = false;
-      let lastMouse = { x: -1, y: -1 }
-
-      addEventListener('keydown', (event) => {
-        if (event.key === 'Shift') {
-          shiftDown = true;
-        }
-      });
-
-      addEventListener('keyup', (event) => {
-        if (event.key === 'Shift') {
-          shiftDown = false;
-        }
-      });
-
+      addEventListener('wheel', (event) => earth.zoom(event.deltaY));
+      addEventListener('mousedown', (event) => earth.onMouseDown(event))
+      addEventListener('mouseup',(event) =>  earth.onMouseUp());
       addEventListener('mousemove', (event) => {
-        if (!mouseDown) return;
-
-        if (lastMouse.x == -1 || lastMouse.y == -1) {
-          lastMouse = { x: event.clientX, y: event.clientY }
-        } 
-        
-        // Get the change in mouse position
-        const mouseDelta = {
-          x: (event.clientX - lastMouse.x),
-          y: (event.clientY - lastMouse.y)
-        }
-
-        // Update photo zoom
-        if (shiftDown) {
-          const deltaZoom = ZOOM_SENSITIVITY * (event.clientY - lastMouse.y) / window.innerWidth;
-          earth.updateZoom(deltaZoom);
-        } else {
-          // Update the latitude/longitude for the Earth
-          earth.updateLatLon(
-            mouseDelta.y * LAT_SENSITIVITY,
-            mouseDelta.x * LON_SENSITIVITY
-          );
-        }
-
-        lastMouse = { x: event.clientX, y: event.clientY }
+        if (event.buttons !== 1) return;
+        earth.rotateDelta(event.movementX, event.movementY);
       })
-
-      addEventListener('mousedown',(event) => {
-        clearTimeout(gotoTimeout);
-        mouseDown = true;
-        lastMouse = { x: event.clientX, y: event.clientY }
-      })
-
-      addEventListener('mouseup',(event) => {
-        mouseDown = false;
-      });
     </script>
   </body>
 </html>

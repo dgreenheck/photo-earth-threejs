@@ -1,0 +1,44 @@
+{
+  "bahamas": {
+    "imageUrl": "images/photos/bahamas.jpg",
+    "coords": {
+      "lat": 25.0343,
+      "lon": 77.3963
+    }
+  },
+  "china": {
+    "imageUrl": "images/photos/greatwallofchina.jpg",
+    "coords": {
+      "lat": 40.4319,
+      "lon": -116.5704
+    }
+  },
+  "egypt": {
+    "imageUrl": "images/photos/pyramids.jpg",
+    "coords": {
+      "lat": 29.9773,
+      "lon": -31.1325
+    }
+  },
+  "newyork": {
+    "imageUrl": "images/photos/newyork.jpg",
+    "coords": {
+      "lat": 40.7128,
+      "lon": 74.0060
+    }
+  },
+  "newzealand": {
+    "imageUrl": "images/photos/newzealand.jpg",
+    "coords": {
+      "lat": -39.2817,
+      "lon": -175.5685
+    }
+  },
+  "paris": {
+    "imageUrl": "images/photos/paris.jpg",
+    "coords": {
+      "lat": 48.8566,
+      "lon": -2.3522
+    }
+  }
+}
